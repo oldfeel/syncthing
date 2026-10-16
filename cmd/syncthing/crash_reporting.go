@@ -20,6 +20,8 @@ import (
 	"time"
 
 	"github.com/syncthing/syncthing/internal/slogutil"
+	"github.com/syncthing/syncthing/lib/build"
+	"github.com/syncthing/syncthing/lib/tlsutil"
 )
 
 const (
@@ -81,13 +83,14 @@ func uploadPanicLog(ctx context.Context, urlBase, file string) error {
 	if err != nil {
 		return err
 	}
+	headReq.Header.Set("User-Agent", build.UserAgent())
 
 	// Set a reasonable timeout on the HEAD request
 	headCtx, headCancel := context.WithTimeout(ctx, headRequestTimeout)
 	defer headCancel()
 	headReq = headReq.WithContext(headCtx)
 
-	resp, err := http.DefaultClient.Do(headReq)
+	resp, err := tlsutil.ShortLivedHTTPClient.Do(headReq)
 	if err != nil {
 		return err
 	}
@@ -101,13 +104,14 @@ func uploadPanicLog(ctx context.Context, urlBase, file string) error {
 	if err != nil {
 		return err
 	}
+	putReq.Header.Set("User-Agent", build.UserAgent())
 
 	// Set a reasonable timeout on the PUT request
 	putCtx, putCancel := context.WithTimeout(ctx, putRequestTimeout)
 	defer putCancel()
 	putReq = putReq.WithContext(putCtx)
 
-	resp, err = http.DefaultClient.Do(putReq)
+	resp, err = tlsutil.ShortLivedHTTPClient.Do(putReq)
 	if err != nil {
 		return err
 	}
@@ -125,7 +129,7 @@ func uploadPanicLog(ctx context.Context, urlBase, file string) error {
 func filterLogLines(data []byte) []byte {
 	filtered := data[:0]
 	matched := false
-	for _, line := range bytes.Split(data, []byte("\n")) {
+	for line := range bytes.SplitSeq(data, []byte("\n")) {
 		switch {
 		case !matched && bytes.HasPrefix(line, []byte("Panic ")):
 			// This begins the panic trace, set the matched flag and append.

@@ -436,7 +436,7 @@ func (a *aggregator) CommitConfiguration(_, to config.Configuration) bool {
 }
 
 func (a *aggregator) updateConfig(folderCfg config.FolderConfiguration) {
-	a.notifyDelay = time.Duration(folderCfg.FSWatcherDelayS) * time.Second
+	a.notifyDelay = time.Duration(folderCfg.FSWatcherDelayS * float64(time.Second))
 	if maxDelay := folderCfg.FSWatcherTimeoutS; maxDelay > 0 {
 		// FSWatcherTimeoutS is set explicitly so use that, but it also
 		// can't be lower than FSWatcherDelayS
@@ -454,7 +454,7 @@ func updateInProgressSet(event events.Event, inProgress map[string]struct{}) {
 		path := event.Data.(map[string]string)["item"]
 		inProgress[path] = struct{}{}
 	case events.ItemFinished:
-		path := event.Data.(map[string]interface{})["item"].(string)
+		path := event.Data.(map[string]any)["item"].(string)
 		delete(inProgress, path)
 	}
 }

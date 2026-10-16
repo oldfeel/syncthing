@@ -77,7 +77,6 @@ func TestDefaultValues(t *testing.T) {
 			MinHomeDiskFree:           Size{1, "%"},
 			URURL:                     "https://data.syncthing.net/newdata",
 			URInitialDelayS:           1800,
-			URPostInsecurely:          false,
 			ReleasesURL:               "https://upgrades.syncthing.net/meta.json",
 			AlwaysLocalNets:           []string{},
 			OverwriteRemoteDevNames:   false,
@@ -284,7 +283,6 @@ func TestOverriddenValues(t *testing.T) {
 		URAccepted:                4,
 		URURL:                     "https://localhost/newdata",
 		URInitialDelayS:           800,
-		URPostInsecurely:          true,
 		ReleasesURL:               "https://localhost/releases",
 		AlwaysLocalNets:           []string{},
 		OverwriteRemoteDevNames:   true,
@@ -1158,8 +1156,8 @@ func TestInvalidDeviceIDRejected(t *testing.T) {
 
 		// Change the device ID of the first device to "invalid". Fast and loose
 		// with the type assertions as we know what the JSON decoder returns.
-		devs := cfg["devices"].([]interface{})
-		dev0 := devs[0].(map[string]interface{})
+		devs := cfg["devices"].([]any)
+		dev0 := devs[0].(map[string]any)
 		dev0["deviceID"] = tc.id
 		devs[0] = dev0
 
@@ -1197,8 +1195,8 @@ func TestInvalidFolderIDRejected(t *testing.T) {
 		// Change the folder ID of the first folder to the empty string.
 		// Fast and loose with the type assertions as we know what the JSON
 		// decoder returns.
-		devs := cfg["folders"].([]interface{})
-		dev0 := devs[0].(map[string]interface{})
+		devs := cfg["folders"].([]any)
+		dev0 := devs[0].(map[string]any)
 		dev0["id"] = tc.id
 		devs[0] = dev0
 
@@ -1324,7 +1322,7 @@ func adjustFolderConfiguration(cfg *FolderConfiguration, id, label string, fsTyp
 // defaultConfigAsMap returns a valid default config as a JSON-decoded
 // map[string]interface{}. This is useful to override random elements and
 // re-encode into JSON.
-func defaultConfigAsMap() map[string]interface{} {
+func defaultConfigAsMap() map[string]any {
 	cfg := New(device1)
 	dev := cfg.Defaults.Device.Copy()
 	adjustDeviceConfiguration(&dev, device2, "name")
@@ -1337,7 +1335,7 @@ func defaultConfigAsMap() map[string]interface{} {
 		// can't happen
 		panic(err)
 	}
-	var tmp map[string]interface{}
+	var tmp map[string]any
 	if err := json.Unmarshal(bs, &tmp); err != nil {
 		// can't happen
 		panic(err)
