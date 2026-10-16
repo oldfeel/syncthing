@@ -95,7 +95,12 @@ func (c *dynamicClient) serve(ctx context.Context) error {
 			c.mut.Unlock()
 
 			err = c.client.Serve(ctx)
-			l.Debugf("Disconnected from %s://%s: %v", c.client.URI().Scheme, c.client.URI().Host, err)
+			// Serve 返回后 URI 可能已为 nil；fmt/%s 对 nil *url.URL 会调 String() 导致空指针崩溃
+			if u := c.client.URI(); u != nil {
+				l.Debugf("Disconnected from %s://%s: %v", u.Scheme, u.Host, err)
+			} else {
+				l.Debugf("Disconnected from relay: %v", err)
+			}
 
 			c.mut.Lock()
 			c.client = nil
@@ -116,7 +121,16 @@ func (c *dynamicClient) Error() error {
 }
 
 func (c *dynamicClient) String() string {
-	return fmt.Sprintf("DynamicClient:%p:%s@%s", c, c.URI(), c.pooladdr)
+	// URI() 在连上具体 relay 前为 nil；%s 会调用 (*url.URL).String() 崩在 Scheme
+	us := "<nil>"
+	if u := c.URI(); u != nil {
+		us = u.String()
+	}
+	ps := "<nil>"
+	if c.pooladdr != nil {
+		ps = c.pooladdr.String()
+	}
+	return fmt.Sprintf("DynamicClient:%p:%s@%s", c, us, ps)
 }
 
 func (c *dynamicClient) URI() *url.URL {

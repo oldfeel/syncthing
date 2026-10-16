@@ -936,9 +936,15 @@ func (s *service) AllAddresses() []string {
 	var addrs []string
 	for _, listener := range s.listeners {
 		for _, lanAddr := range listener.LANAddresses() {
+			if lanAddr == nil {
+				continue
+			}
 			addrs = append(addrs, lanAddr.String())
 		}
 		for _, wanAddr := range listener.WANAddresses() {
+			if wanAddr == nil {
+				continue
+			}
 			addrs = append(addrs, wanAddr.String())
 		}
 	}
@@ -954,6 +960,9 @@ func (s *service) ExternalAddresses() []string {
 	var addrs []string
 	for _, listener := range s.listeners {
 		for _, wanAddr := range listener.WANAddresses() {
+			if wanAddr == nil {
+				continue
+			}
 			addrs = append(addrs, wanAddr.String())
 		}
 	}
@@ -1055,11 +1064,14 @@ func getListenerFactory(cfg config.Configuration, uri *url.URL) (listenerFactory
 }
 
 func urlsToStrings(urls []*url.URL) []string {
-	strings := make([]string, len(urls))
-	for i, url := range urls {
-		strings[i] = url.String()
+	out := make([]string, 0, len(urls))
+	for _, u := range urls {
+		if u == nil {
+			continue
+		}
+		out = append(out, u.String())
 	}
-	return strings
+	return out
 }
 
 func tlsTimedHandshake(tc *tls.Conn) error {

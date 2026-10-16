@@ -170,6 +170,9 @@ func (t *relayListener) Factory() listenerFactory {
 }
 
 func (t *relayListener) String() string {
+	if t.uri == nil {
+		return "relay"
+	}
 	return t.uri.String()
 }
 
